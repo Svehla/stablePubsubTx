@@ -1,0 +1,25 @@
+{
+  "name": "cocoaas",
+  "version": "0.8.11",
+  "description": "> conversation commerce as a service",
+  "license": "ISC",
+  "author": "",
+  "main": ".eslintrc.js",
+  "scripts": {
+    "_": "--clean",
+    "l": "npm run lint:fix",
+    "lint": "eslint \"{server,frontend}/src/**/*.{js,ts,tsx}\" --max-warnings 0",
+    "lint:fix": "eslint \"{server,frontend}/src/**/*.{js,ts,tsx}\" --fix",
+    "ll": "npm run l",
+    "ts:check-types": "cd server && npm run ts:check-types && cd ../frontend && npm run ts:check-types"
+  },
+  "devDependencies": {
+    "@typescript-eslint/parser": "^5.38.0",
+    "eslint": "^8.24.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "eslint-plugin-react": "^7.32.2",
+    "eslint-plugin-sort-imports-es6-autofix": "^0.6.0",
+    "prettier": "2.8.1"
+  }
+}
