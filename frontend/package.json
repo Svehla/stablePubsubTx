@@ -1,0 +1,40 @@
+{
+  "name": "frontend",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc && vite build",
+    "dev": "vite",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview",
+    "ts:check-types": "tsc --noEmit",
+    "ts:generate-api": "ts-node --project npm_scripts/tsconfig.json npm_scripts/generate-ts-types.ts && npm run ts:check-types"
+  },
+  "dependencies": {
+    "@types/node": "^20.11.16",
+    "@types/react-syntax-highlighter": "^15.5.11",
+    "date-fns": "^3.3.1",
+    "openapi-typescript": "^6.7.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-markdown": "^9.0.1",
+    "react-router-dom": "^6.22.0",
+    "react-sync-ui": "^1.0.2",
+    "react-syntax-highlighter": "^15.5.0",
+    "rehype-katex": "^7.0.0",
+    "rehype-raw": "^7.0.0",
+    "remark-math": "^6.0.0",
+    "ts-node": "^10.9.2",
+    "typed-env-parser": "^0.2.4"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@typescript-eslint/eslint-plugin": "^6.14.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "eslint": "^8.55.0",
+    "eslint-plugin-react-refresh": "^0.4.5",
+    "typescript": "^5.2.2",
+    "vite": "^5.0.8"
+  }
+}

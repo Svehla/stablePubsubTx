@@ -31,7 +31,12 @@
   },
   "cSpell.words": [
     "autofix",
-    "ffetch"
+    "coldark",
+    "eventsource",
+    "ffetch",
+    "Katex",
+    "rehype",
+    "SIGUSR"
   ],
   "FSharp.suggestGitignore": false
 }
