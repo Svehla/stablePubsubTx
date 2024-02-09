@@ -6,8 +6,8 @@ import { useNavigate } from 'react-router-dom'
 
 export const syncErrorAlert = makeSyncUI<any>(props => {
   // TODO: do proper JSON to string parser with proper UI
+  // const [showNiceErr, setShowNiceErr] = useState(true)
   const error = props.data
-  let text = error?.toString()
   const navigate = useNavigate()
 
   const isAbortEarlyError = error?.name === 'AbortError'
@@ -15,6 +15,7 @@ export const syncErrorAlert = makeSyncUI<any>(props => {
     isObject(error) &&
     error.type === 'FFetchNotOKError' &&
     error.reason.data.includes('cannot open more than 3 transactions')
+
   useEffect(() => {
     // ignore abort early errors
     if (isAbortEarlyError || isMoreThan3TxError) {
@@ -30,9 +31,15 @@ export const syncErrorAlert = makeSyncUI<any>(props => {
     console.error(error)
   })
 
+  const NEW_LINE_SIGN = '+   '
+
+  let text = ''
   if (isObject(error)) {
     text = JSON.stringify(error, null, 2)
+  } else {
+    text = error?.toString()
   }
+  const textLines = text.replaceAll('\\n', `\n${NEW_LINE_SIGN}`).replaceAll('\\"', `"`).split(`\n`)
 
   if (isAbortEarlyError || isMoreThan3TxError) return <div />
 
@@ -67,7 +74,15 @@ export const syncErrorAlert = makeSyncUI<any>(props => {
       >
         <h3>ERROR</h3>
 
-        <pre style={{ maxWidth: '100%', overflow: 'auto', color: 'red' }}>{text}</pre>
+        <div>
+          {textLines.map((line, idx) => (
+            <pre key={idx} style={{ maxWidth: '100%', overflow: 'auto', color: 'red' }}>
+              {line}
+            </pre>
+          ))}
+        </div>
+
+        {/* <button>show raw err</button> */}
 
         <div style={{ display: 'flex', width: '100%', justifyContent: 'right' }}>
           <button onClick={() => props.resolve()} style={{ padding: '1rem', border: 'none' }}>
