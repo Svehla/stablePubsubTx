@@ -18,6 +18,7 @@ const validateData = convertSchemaToYupValidationObject(tMessage.properties.data
 // 1. ID generation + message wrapping
 // 2. syncing redis transaction into redis data structure
 export const chatbotHandler = async (a: {
+  // TODO: put transaction ID?
   userId: string
   chatId: string
   userMessage: string
@@ -75,30 +76,9 @@ const mainChatbotHandler = async (a: {
   userMessage: string
   sendMessage: (message: TMessage['data']) => Promise<any> | any
 }) => {
-  let parentMessageId = null as null | string
-
-  // this enable to append bot messages even when bot init message is not send
-  const sendMessage = async (message: TMessage['data']) => {
-    switch (message.type) {
-      case 'bot_append':
-        if (parentMessageId === null) {
-          const createdMessage = await a.sendMessage({ type: 'bot' as const, message: '' })
-          parentMessageId = createdMessage.id
-        }
-        a.sendMessage({ ...message, parentMessageId: parentMessageId! })
-        break
-
-      case 'bot':
-        const createdMessage = await a.sendMessage(message)
-        parentMessageId = createdMessage.id
-        break
-      default:
-        a.sendMessage(message)
-        break
-    }
-  }
-
-  sendMessage({ type: 'user' as const, message: a.userMessage })
+  a.sendMessage({ type: 'user' as const, message: a.userMessage })
+  let parentMessage = await a.sendMessage({ type: 'bot' as const, message: '' })
+  const parentMessageId = parentMessage.id
 
   const messages = [
     // { role: 'system', content: 'TODO: add system message' },
@@ -110,18 +90,47 @@ const mainChatbotHandler = async (a: {
   ]
 
   if (true) {
+    // TODO: this is temporary solution, need to add multiple support transaction
+    // TODO: should I enable to put only 1 message per chatbot??? ...
+    // and this message will has multiple 1:N stuffs
+    // this enable to append bot messages even when bot init message is not send
+    const sendMessage = async (message: TMessage['data']) => {
+      switch (message.type) {
+        case 'bot':
+          a.sendMessage({
+            type: 'bot_append',
+            message: message.message,
+            // message: `\n\n<small style="color: blue">MSG:</small> ${message.message}\n\n`,
+            parentMessageId,
+          })
+          break
+
+        case 'bot_append':
+          a.sendMessage({ ...message, parentMessageId })
+          break
+
+        // debug GUI is not supported yet...
+        // TODO: add parent_transaction_bot_message_wrapper into redis
+        // TODO: add support for formateed nested message under 1 active tx
+        case 'debug':
+          a.sendMessage({
+            type: 'bot_append',
+            message: `\n\n<pre style="color: #777">DEBUG: ${message.message}</pre>\n\n`,
+            parentMessageId,
+          })
+          break
+
+        default:
+          a.sendMessage(message)
+          break
+      }
+    }
+
     // HTTP server proxy
     // TODO: retry if it fails...
     await ffetch('http://localhost:2020/custom_llm', 'POST', {
       body: { messages, userMessage: a.userMessage },
-      okResponseParser: res =>
-        jsonArrayStreamFetchReader(res, message => {
-          if (message.type === 'bot_append') {
-            sendMessage({ ...message, parentMessageId })
-          } else {
-            sendMessage(message)
-          }
-        }),
+      okResponseParser: res => jsonArrayStreamFetchReader(res, sendMessage),
     })
     // openai proxy
   } else {
@@ -129,7 +138,7 @@ const mainChatbotHandler = async (a: {
       model: 'gpt-3.5-turbo-16k', // 'gpt-4',
       messages,
       onTextChunk: message =>
-        sendMessage({ type: 'bot_append' as const, message, parentMessageId: null as any }),
+        a.sendMessage({ type: 'bot_append' as const, message, parentMessageId }),
     })
   }
 }

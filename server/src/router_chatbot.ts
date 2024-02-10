@@ -69,6 +69,7 @@ routerChatbot.delete(
 )
 
 const WAIT_FOR_RACE_CONDITION_TX = 200
+const MAX_TX_COUNT = 3
 
 routerChatbot.get(
   '/chat/:chatId',
@@ -140,7 +141,6 @@ routerChatbot.post(
     // TODO: add support for multiple transaction over one chat
     const activeTxs = await redisCore.getKeysByPrefix(getRedisTransactionId(req.params.chatId, ''))
     const transactionId = getRedisTransactionId(req.params.chatId, v4())
-    const MAX_TX_COUNT = 3
     if (activeTxs.length >= MAX_TX_COUNT)
       return res.status(400).send(`cannot open more than ${MAX_TX_COUNT} transactions`)
 

@@ -20,6 +20,7 @@ import { useFFetch } from './ffetch/useFFetch'
 import { useNavigate, useParams } from 'react-router-dom'
 import Markdown from 'react-markdown'
 import rehypeKatex from 'rehype-katex'
+import rehypeRaw from 'rehype-raw'
 import remarkMath from 'remark-math'
 
 type Messages = NonNullable<Awaited<ReturnType<typeof services['chat']['get']>>[0]>
@@ -168,6 +169,9 @@ export const Root = () => {
           }
           // clear input only when its success
           if (isFirstSuccessMessage === true) {
+            setTimeout(() => {
+              scrollChatToBottom()
+            }, 20)
             // TODO: read acknowledge response from BE to make it as fast as possible?
             // TODO: remove delay 100!!! for ACT response => redis tx already exist!
             notifyOtherTabs({ type: 'SYNC_CHAT', chatId: params.chatId! })
@@ -347,7 +351,13 @@ export const Root = () => {
                       >
                         <Markdown
                           remarkPlugins={[remarkMath]}
-                          rehypePlugins={[rehypeKatex]}
+                          skipHtml={true}
+                          rehypePlugins={[
+                            rehypeKatex,
+                            // DANGEROUS!!! it enable to render HTML
+                            // TODO: implement transactions into single response realtime message
+                            rehypeRaw,
+                          ]}
                           components={{
                             li: props => {
                               return <li style={{ marginLeft: '2rem' }}>{props.children}</li>

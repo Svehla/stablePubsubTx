@@ -1,6 +1,5 @@
 import { Express } from 'express'
-import { T, apiDoc, initApiDocs, jsValueToSchema } from 'swagger-typed-express-docs'
-import { apiHandler } from './utils/apiHandler'
+import { T, apiDoc, initApiDocs } from 'swagger-typed-express-docs'
 import { appEnv } from './beConfig'
 import swaggerUi from 'swagger-ui-express'
 
@@ -33,19 +32,4 @@ export const setupOpenAPI3_0_0Docs = (app: Express) => {
     },
     servers: [{ url: `http://localhost:${appEnv.port}` }],
   })
-
-  // ----------------------------------------------------------
-  // ---- Coffee for those who understand what's happening ----
-
-  // eslint-disable-next-line prettier/prettier
-  app.get(
-    '/MAGIC',
-    apiHandler({ returns: jsValueToSchema(lazyOpenAPI3_0_0JSON) })((_req, res) => {
-      // @ts-expect-error
-      res.send(null)
-    })
-  )
-
-  lazyOpenAPI3_0_0JSON.paths['/developer/api-docs'] = initApiDocs(app).paths['/MAGIC']
-  // ----------------------------------------------------------
 }

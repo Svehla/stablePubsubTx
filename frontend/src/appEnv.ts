@@ -8,6 +8,7 @@ import {
 window.process = window.process || {}
 // @ts-expect-error
 window.process.env = import.meta.env
+// console.log(window.process)
 
 export const appEnv = validateConfig({
   // vite envs
