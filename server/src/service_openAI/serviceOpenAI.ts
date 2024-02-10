@@ -16,32 +16,24 @@ export const chatGptStreamCall = async (
     onTextChunk?: (text: string) => Promise<void> | void
   }
 ) =>
-  ffetch(
-    appEnv.openAI.completionPath,
-    'POST',
-    {
-      body: {
-        model: a.model,
-        messages: [
-          a.systemPrompt
-            ? {
-                role: 'system',
-                content: a.systemPrompt,
-              }
-            : undefined,
-          ...a.messages,
-        ].filter(Boolean),
+  ffetch('https://api.openai.com/v1/chat/completions', 'POST', {
+    body: {
+      model: a.model,
+      messages: [
+        a.systemPrompt
+          ? {
+              role: 'system',
+              content: a.systemPrompt,
+            }
+          : undefined,
+        ...a.messages,
+      ].filter(Boolean),
 
-        // TODO: decide max token size...
-        max_tokens: a.maxTokens ?? 1000,
-        temperature: a.temperature ?? 0.0,
-        stream: true,
-      },
-      okResponseParser: res => openAIEventSourceFetchReader(res, a.onTextChunk),
+      // TODO: decide max token size...
+      max_tokens: a.maxTokens ?? 1000,
+      temperature: a.temperature ?? 0.0,
+      stream: true,
     },
-    {
-      headers: {
-        Authorization: `Bearer ${appEnv.openAI.token}`,
-      },
-    }
-  )
+    bearerAuth: appEnv.openAI.token,
+    okResponseParser: res => openAIEventSourceFetchReader(res, a.onTextChunk),
+  })

@@ -46,6 +46,9 @@ export const tMessage = T.object({
       message: T.string,
       parentMessageId: T.string,
     }),
+    tUnionObject('debug', {
+      message: T.string,
+    }),
   ] as const),
 })
 

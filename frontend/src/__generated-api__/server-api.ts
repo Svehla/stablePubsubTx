@@ -55,6 +55,10 @@ export interface paths {
                     type: "bot_append";
                     message: string;
                     parentMessageId: string;
+                  }, {
+                    /** @enum {string} */
+                    type: "debug";
+                    message: string;
                   }]>;
                 }[];
             };
@@ -99,6 +103,10 @@ export interface paths {
                   type: "bot_append";
                   message: string;
                   parentMessageId: string;
+                }, {
+                  /** @enum {string} */
+                  type: "debug";
+                  message: string;
                 }]>;
               }]>[];
           };
@@ -161,6 +169,10 @@ export interface paths {
                   type: "bot_append";
                   message: string;
                   parentMessageId: string;
+                }, {
+                  /** @enum {string} */
+                  type: "debug";
+                  message: string;
                 }]>;
               }]>[];
           };

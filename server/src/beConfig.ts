@@ -7,6 +7,5 @@ export const appEnv = validateConfig({
 
   openAI: {
     token: getStringFromEnvParser('OPEN_AI_TOKEN'),
-    completionPath: getStringFromEnvParser('OPEN_AI_COMPLETIONS_PATH'),
   },
 })

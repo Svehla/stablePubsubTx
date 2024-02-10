@@ -1,4 +1,4 @@
-import { appEnvs } from '../appEnvs'
+import { appEnv } from '../appEnv'
 import { ffetch } from './ffetch'
 import { jsonArrayStreamFetchReader } from './jsonArrayStreamFetchReader'
 import { paths } from '../__generated-api__/server-api'
@@ -39,7 +39,7 @@ export const createTypedService =
         query: a?.query,
         // @ts-expect-error
         body: a?.body,
-        domain: appEnvs.beUrl,
+        domain: appEnv.beUrl,
         controller: a.controller,
         ...staticConf,
       },
@@ -85,7 +85,7 @@ export const createTypedServiceJsonStream =
         query: a?.query,
         // @ts-expect-error
         body: a?.body,
-        domain: appEnvs.beUrl,
+        domain: appEnv.beUrl,
         // @ts-expect-error
         okResponseParser: r => jsonArrayStreamFetchReader(r, onMessage),
         controller: a.controller,

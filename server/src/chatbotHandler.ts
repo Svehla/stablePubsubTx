@@ -2,13 +2,18 @@
 import { TMessage, createMessageWrapper, redis_chat } from './db_redis/redis_chat'
 import { aggregateBotChunksIntoMessage } from './utils/aggregators'
 import { chatGptStreamCall } from './service_openAI/serviceOpenAI'
+import { ffetch } from './lib_ffetch/ffetch'
 import { initSyncQueue } from './lib_stablePubsubTx/SyncQueue'
+import { jsonArrayStreamFetchReader } from './lib_jsonStreamOverHTTP/jsonArrayStreamFetchReader'
 import { redisCore } from './db_redis/redisCore'
 import { redisTxAdapter } from './lib_stablePubsubTx'
 
 export const getRedisTransactionId = (chatId: string, id: string) => `TRANSACTION:${chatId}_${id}`
 
 // strategy 1: sync messages when transaction will be closed
+// this abstraction add
+// 1. ID generation + message wrapping
+// 2. syncing redis transaction into redis data structure
 export const chatbotHandler = async (a: {
   userId: string
   chatId: string
@@ -39,6 +44,7 @@ export const chatbotHandler = async (a: {
       chatHistory: aggregatedChatHistory,
       userMessage: a.userMessage,
       sendMessage: async messageData => {
+        // TODO: is syncQueue needed there?
         return await syncQueue.pushAsyncCb(async () => {
           const newMessage = createMessageWrapper(messageData)
           a.sendMessage(newMessage)
@@ -68,7 +74,7 @@ const mainChatbotHandler = async (a: {
   const createdMessage = await a.sendMessage({ type: 'bot' as const, message: '' })
   const parentMessageId = createdMessage.id
 
-  const chatGPTMessages = [
+  const messages = [
     // { role: 'system', content: 'TODO: add system message' },
     ...a.chatHistory.map(i => ({
       role: i.data.type === 'bot' ? ('assistant' as const) : ('user' as const),
@@ -77,23 +83,22 @@ const mainChatbotHandler = async (a: {
     { role: 'user' as const, content: a.userMessage },
   ]
 
-  await chatGptStreamCall({
-    model:
-      // 'gpt-4',
-      'gpt-3.5-turbo-16k',
-    messages: chatGPTMessages,
-    onTextChunk: gptChunk => {
-      a.sendMessage({
-        type: 'bot_append' as const,
-        message: gptChunk,
-        parentMessageId,
-      })
-    },
-  })
+  // TODO: retry if it fails...
 
-  // TODO: there should be chatGPT stream proxy
-  // for (let i = 0; i < 50; i++) {
-  //   await delay(200)
-  //   a.sendMessage({ type: 'bot_append' as const, message: `${i} `, parentMessageId })
-  // }
+  if (true) {
+    await ffetch('http://localhost:2020/x/search', 'POST', {
+      body: { messages, userMessage: a.userMessage },
+      okResponseParser: res =>
+        jsonArrayStreamFetchReader(res, message =>
+          a.sendMessage({ type: 'bot_append' as const, message, parentMessageId })
+        ),
+    })
+  } else {
+    await chatGptStreamCall({
+      model: 'gpt-3.5-turbo-16k', // 'gpt-4',
+      messages,
+      onTextChunk: message =>
+        a.sendMessage({ type: 'bot_append' as const, message, parentMessageId }),
+    })
+  }
 }

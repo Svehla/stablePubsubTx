@@ -26,6 +26,7 @@ type Messages = NonNullable<Awaited<ReturnType<typeof services['chat']['get']>>[
 export const Root = () => {
   const [messages, setMessages] = useState([] as Messages)
   const ref = useRef<HTMLDivElement | null>(null)
+  const [showDebug, setShowDebug] = useState(true)
   // TODO: refactor into USER_ID => each user may have N Chats
   // org > user > chat
   // const [userId, setUserId] = useLocalStorage('USER_ID', 'john')
@@ -54,9 +55,6 @@ export const Root = () => {
   const isMobile = windowDim.width <= 500
 
   useComponentDidMount(async () => {
-    // const controller1 = new AbortController()
-    // const controller2 = new AbortController()
-
     // const main = async () => {
     if (params.chatId === 'NEW') {
       const [createdChat] = await chatCreate.fetch({})
@@ -282,76 +280,80 @@ export const Root = () => {
               </div>
             )}
 
-            {filterEventsByEventTypes(aggregatedMessages, ['message'] as const).map((i, index) => (
-              <div
-                key={index}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  justifyContent: i.data.type === 'bot' ? 'start' : 'end',
-                  marginBottom: '10px',
-                }}
-              >
+            {filterEventsByEventTypes(aggregatedMessages, ['message'] as const).map((i, index) => {
+              const isLastRenderedMesage = aggregatedMessages.length === index + 1
+              if (!showDebug && i.data.type === 'debug') return
+              return (
                 <div
+                  key={index}
                   style={{
-                    ...(i.data.type === 'bot'
-                      ? { background: '#f0f0f0' }
-                      : {
-                          background: '#0a7cff',
-                          color: 'white',
-                        }),
-                    lineHeight: '15px',
-                    maxWidth: '90%',
-                    borderRadius: '10px',
-                    padding: '10px',
+                    width: '100%',
+                    display: 'flex',
+                    justifyContent: i.data.type === 'bot' ? 'start' : 'end',
+                    marginBottom: '10px',
                   }}
                 >
-                  {aggregatedMessages.length === index + 1 &&
-                  i.data.type === 'bot' &&
-                  i.data.message === '' &&
-                  loading ? (
-                    <div style={{ fontSize: '1rem', color: '#aaa' }}>loading ...</div>
-                  ) : (
-                    <div
-                      style={{
-                        paddingLeft: '0.5rem',
-                      }}
-                    >
-                      <Markdown
-                        remarkPlugins={[remarkMath]}
-                        rehypePlugins={[rehypeKatex]}
-                        components={{
-                          li: props => {
-                            return <li style={{ marginLeft: '2rem' }}>{props.children}</li>
-                          },
-                          code(props) {
-                            const { children, className, node, ...rest } = props
-                            const match = /language-(\w+)/.exec(className || '')
-                            return match ? (
-                              // @ts-expect-error
-                              <SyntaxHighlighter
-                                {...rest}
-                                PreTag='div'
-                                // eslint-disable-next-line react/no-children-prop
-                                children={String(children).replace(/\n$/, '')}
-                                language={match[1]}
-                                style={coldarkDark}
-                              />
-                            ) : (
-                              <code {...rest} className={className}>
-                                {children}
-                              </code>
-                            )
-                          },
+                  <div
+                    style={{
+                      ...(i.data.type === 'bot'
+                        ? { background: '#f0f0f0' }
+                        : {
+                            background: '#0a7cff',
+                            color: 'white',
+                          }),
+                      lineHeight: '15px',
+                      maxWidth: '90%',
+                      borderRadius: '10px',
+                      padding: '10px',
+                    }}
+                  >
+                    {isLastRenderedMesage &&
+                    i.data.type === 'bot' &&
+                    i.data.message === '' &&
+                    loading ? (
+                      <div style={{ fontSize: '1rem', color: '#aaa' }}>loading ...</div>
+                    ) : (
+                      <div
+                        style={{
+                          paddingLeft: '0.5rem',
                         }}
                       >
-                        {i.data.message}
-                      </Markdown>
-                    </div>
-                  )}
+                        <Markdown
+                          remarkPlugins={[remarkMath]}
+                          rehypePlugins={[rehypeKatex]}
+                          components={{
+                            li: props => {
+                              return <li style={{ marginLeft: '2rem' }}>{props.children}</li>
+                            },
+                            code(props) {
+                              const { children, className, node, ...rest } = props
+                              const match = /language-(\w+)/.exec(className || '')
+                              return match ? (
+                                // @ts-expect-error
+                                <SyntaxHighlighter
+                                  {...rest}
+                                  PreTag='div'
+                                  // eslint-disable-next-line react/no-children-prop
+                                  children={String(children).replace(/\n$/, '')}
+                                  language={match[1]}
+                                  style={coldarkDark}
+                                />
+                              ) : (
+                                <code {...rest} className={className}>
+                                  {children}
+                                </code>
+                              )
+                            },
+                          }}
+                        >
+                          {i.data.message}
+                        </Markdown>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
 
           <form
@@ -395,6 +397,22 @@ export const Root = () => {
                 // this is not applied on multiple tabs => TODO: do multiple tabs synchronization somehow over localstorage
               >
                 🧹
+              </button>
+
+              <button
+                type='button'
+                onClick={() => {
+                  setShowDebug(p => !p)
+                }}
+                style={{
+                  border: 'none',
+                  padding: '0px 5px',
+                  width: '60px',
+                  fontSize: '1.5rem',
+                  background: showDebug ? '#ff0a7c' : 'white',
+                }}
+              >
+                🐞
               </button>
 
               <Input

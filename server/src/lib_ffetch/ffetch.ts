@@ -1,4 +1,12 @@
-import { toQueryParams } from './queryParams'
+export const toQueryParams = (params: Record<string, any>) => {
+  const search = new URLSearchParams()
+
+  Object.entries(params).forEach(([k, v]) => {
+    search.append(k, v)
+  })
+
+  return search.toString()
+}
 
 type FetchInit = Parameters<typeof fetch>[1] | undefined
 type JSFetchArgs = { url: string; init: FetchInit }

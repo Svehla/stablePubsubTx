@@ -9,7 +9,7 @@ window.process = window.process || {}
 // @ts-expect-error
 window.process.env = import.meta.env
 
-export const appEnvs = validateConfig({
+export const appEnv = validateConfig({
   // vite envs
   MODE: getStringEnumFromEnvParser('MODE', ['development'] as const),
   // getBoolFromEnvParser is not working if value is not string, but if its already pre-validate

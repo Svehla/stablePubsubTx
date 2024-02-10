@@ -1,5 +1,4 @@
 import { Response } from 'express'
-import { serializeErrorToJSON } from '../utils/errors'
 
 export const setup_with_jsonStreamOverHTTP =
   (serializeError: (err: any) => any) =>
