@@ -5,6 +5,7 @@ import { aggregateBotChunksIntoMessage } from './utils/aggregators'
 import { coldarkDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { delay } from './utils/time'
 import { filterEventsByEventTypes } from './utils/array'
+import { isToday } from 'date-fns'
 import { services } from './ffetch/services'
 import { syncErrorAlert } from './components/syncErrorAlert'
 import { urls } from './urls'
@@ -43,6 +44,7 @@ export const Root = () => {
   const inputRef = useRef<HTMLInputElement | null>(null)
 
   const list = useFFetch(services.chat.list)
+  // TODO: everytime when chatGet is called, I should reject all running chatCreate HTTP requests
   const chatGet = useFFetch(services.chat.get)
   const chatCreate = useFFetch(services.chat.create)
   const chatSendMessage = useFFetch(services.chat.sendMessage, { rejectPrevReq: false })
@@ -282,7 +284,31 @@ export const Root = () => {
 
             {filterEventsByEventTypes(aggregatedMessages, ['message'] as const).map((i, index) => {
               const isLastRenderedMesage = aggregatedMessages.length === index + 1
-              if (!showDebug && i.data.type === 'debug') return
+              if (i.data.type === 'debug') {
+                if (showDebug) {
+                  return (
+                    <div
+                      key={index}
+                      style={{
+                        justifyContent: 'start',
+                        width: 'auto',
+                        border: 'solid 1px #555',
+                        background: '#222',
+                        color: '#FFF',
+                        marginBottom: '10px',
+                        lineHeight: '15px',
+                        maxWidth: '90%',
+                        borderRadius: '10px',
+                        padding: '10px',
+                      }}
+                    >
+                      <Markdown>{i.data.message}</Markdown>
+                    </div>
+                  )
+                } else {
+                  return <div key={index} />
+                }
+              }
               return (
                 <div
                   key={index}
@@ -293,6 +319,7 @@ export const Root = () => {
                     marginBottom: '10px',
                   }}
                 >
+                  {/* <div style={{ width: '100%' }}> */}
                   <div
                     style={{
                       ...(i.data.type === 'bot'
@@ -351,6 +378,15 @@ export const Root = () => {
                       </div>
                     )}
                   </div>
+
+                  {/* {i.data.type === 'user' && (
+                      <div style={{ color: '#AAA', fontSize: '10px' }}>
+                        {isToday(new Date(i.createdAtISO))
+                          ? new Date(i.createdAtISO).toLocaleTimeString()
+                          : new Date(i.createdAtISO).toLocaleString()}
+                      </div>
+                    )}
+                  </div> */}
                 </div>
               )
             })}
@@ -403,6 +439,9 @@ export const Root = () => {
                 type='button'
                 onClick={() => {
                   setShowDebug(p => !p)
+                  setTimeout(() => {
+                    scrollChatToBottom()
+                  }, 10)
                 }}
                 style={{
                   border: 'none',

@@ -5,6 +5,23 @@ import { v4 } from 'uuid'
 
 const getSortedGroupId = (a: { userId: string }) => `sorted_group:userId:${a.userId}`
 
+const tMessageData = T.oneOf([
+  tUnionObject('bot', {
+    message: T.string,
+  }),
+  tUnionObject('user', {
+    message: T.string,
+  }),
+  tUnionObject('bot_append', {
+    // TODO: this should not have id, it should has tempId: T.string... because it will be aggregated in the future...
+    message: T.string,
+    parentMessageId: T.string, // this is not mandatory field for chatbots, its done automatically...
+  }),
+  tUnionObject('debug', {
+    message: T.string,
+  }),
+] as const)
+
 export const tMessage = T.object({
   id: T.string,
   createdAtISO: T.string,
@@ -34,22 +51,7 @@ export const tMessage = T.object({
   */
 
   type: T.enum(['message'] as const),
-  data: T.oneOf([
-    tUnionObject('bot', {
-      message: T.string,
-    }),
-    tUnionObject('user', {
-      message: T.string,
-    }),
-    tUnionObject('bot_append', {
-      // TODO: this should not have id, it should has tempId: T.string... because it will be aggregated in the future...
-      message: T.string,
-      parentMessageId: T.string,
-    }),
-    tUnionObject('debug', {
-      message: T.string,
-    }),
-  ] as const),
+  data: tMessageData,
 })
 
 export type TMessage = InferSchemaType<typeof tMessage>
