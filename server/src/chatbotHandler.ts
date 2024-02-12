@@ -134,6 +134,7 @@ const mainChatbotHandler = async (a: {
     })
     // openai proxy
   } else {
+    // TODO: generate proper types for 3rd party service
     await chatGptStreamCall({
       model: 'gpt-3.5-turbo-16k', // 'gpt-4',
       messages,

@@ -13,8 +13,9 @@ import express from 'express'
 
 export const routerChatbot = express.Router()
 
+// project > user > chat
 // TODO: implement multi-auth users
-const userId = 'user-1'
+const userId = 'user_1'
 
 routerChatbot.get(
   '/chat',
