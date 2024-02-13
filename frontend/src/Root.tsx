@@ -241,7 +241,7 @@ export const Root = () => {
 
         <div
           style={{
-            width: '100%',
+            width: 'calc(100% - 100px)',
             display: 'flex',
             flexDirection: 'column',
             height: '100vh',
@@ -295,18 +295,25 @@ export const Root = () => {
                       key={index}
                       style={{
                         justifyContent: 'start',
-                        width: 'auto',
+                        // width: 'auto',
                         border: 'solid 1px #555',
                         background: '#222',
                         color: '#FFF',
                         marginBottom: '10px',
                         lineHeight: '15px',
-                        maxWidth: '90%',
                         borderRadius: '10px',
                         padding: '10px',
                       }}
                     >
-                      <Markdown>{i.data.message}</Markdown>
+                      <div
+                        style={{
+                          overflowY: 'auto',
+                          whiteSpace: 'pre',
+                        }}
+                      >
+                        {/* debug is not markdown! */}
+                        {i.data.message}
+                      </div>
                     </div>
                   )
                 } else {
@@ -359,6 +366,7 @@ export const Root = () => {
                             rehypeRaw,
                           ]}
                           components={{
+                            a: props => <a {...props} target='_blank' />,
                             li: props => {
                               return <li style={{ marginLeft: '2rem' }}>{props.children}</li>
                             },

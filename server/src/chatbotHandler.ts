@@ -82,10 +82,12 @@ const mainChatbotHandler = async (a: {
 
   const messages = [
     // { role: 'system', content: 'TODO: add system message' },
-    ...a.chatHistory.map(i => ({
-      role: i.data.type === 'bot' ? ('assistant' as const) : ('user' as const),
-      content: i.data.message,
-    })),
+    ...a.chatHistory
+      .filter(i => i.data.type === 'bot' || i.data.type === 'user')
+      .map(i => ({
+        role: i.data.type === 'bot' ? ('assistant' as const) : ('user' as const),
+        content: i.data.message,
+      })),
     { role: 'user' as const, content: a.userMessage },
   ]
 
@@ -94,8 +96,12 @@ const mainChatbotHandler = async (a: {
     // TODO: should I enable to put only 1 message per chatbot??? ...
     // and this message will has multiple 1:N stuffs
     // this enable to append bot messages even when bot init message is not send
-    const sendMessage = async (message: TMessage['data']) => {
+    const sendMessage = async (
+      message: TMessage['data'] | { type: 'UNHANDLED_ERROR'; data: any }
+    ) => {
       switch (message.type) {
+        case 'UNHANDLED_ERROR':
+          throw new Error(JSON.stringify(message))
         case 'bot':
           a.sendMessage({
             type: 'bot_append',
@@ -112,13 +118,13 @@ const mainChatbotHandler = async (a: {
         // debug GUI is not supported yet...
         // TODO: add parent_transaction_bot_message_wrapper into redis
         // TODO: add support for formateed nested message under 1 active tx
-        case 'debug':
-          a.sendMessage({
-            type: 'bot_append',
-            message: `\n\n<pre style="color: #777">DEBUG: ${message.message}</pre>\n\n`,
-            parentMessageId,
-          })
-          break
+        // case 'debug':
+        //   a.sendMessage({
+        //     type: 'bot_append',
+        //     message: `\n\n<pre style="color: #777">DEBUG: ${message.message}</pre>\n\n`,
+        //     parentMessageId,
+        //   })
+        //   break
 
         default:
           a.sendMessage(message)
