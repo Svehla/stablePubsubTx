@@ -42,3 +42,11 @@ export const initSyncQueue = () => {
     },
   }
 }
+
+export const with_syncQueue = async (
+  handlerCb: (pushAsyncCb: (cb: () => Promise<any>) => any) => any
+) => {
+  const syncQueue = initSyncQueue()
+  await handlerCb(syncQueue.pushAsyncCb)
+  await syncQueue.waitTillEmptyOrReject()
+}

@@ -31,17 +31,24 @@ export const openAIEventSourceFetchReader = async <T>(
 
   const finalOut = [] as any[]
 
+  let errors = [] as any[]
   // @ts-expect-error invalid res.body data type
   for await (const chunk of res.body) {
-    parser.feed(decoder.decode(chunk))
+    // for await do not throw error outside, so the error is hidden...
+    try {
+      parser.feed(decoder.decode(chunk))
 
-    for (let message of lastDecodedValues) {
-      finalOut.push(message)
-      await onTextChunk?.(message)
+      for (let message of lastDecodedValues) {
+        finalOut.push(message)
+        await onTextChunk?.(message)
+      }
+
+      lastDecodedValues = []
+    } catch (err) {
+      errors.push(err)
     }
-
-    lastDecodedValues = []
   }
+  if (errors.length > 0) throw errors[0] // throw only first error! similar as sync queue...
 
   parser.reset()
 

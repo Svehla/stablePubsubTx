@@ -1,5 +1,5 @@
 import { RedisTransaction } from './redisTxAdapter'
-import { initSyncQueue } from './SyncQueue'
+import { initSyncQueue, with_syncQueue } from './SyncQueue'
 
 // ## possible names
 // - single tenancy
@@ -78,46 +78,50 @@ const joinIntoTransaction = async <T>(
     waitTillTransactionWillBeOpened: any
     registerOnDisconnect: (onDisconnect: () => void) => void
   },
-  onReceiveNewEvent: (data: T) => void
+  onReceiveNewEvent: (data: T) => any
 ) => {
   let transaction = await persistentTXStorage.getTransaction()
 
-  const syncQueue = initSyncQueue()
+  await with_syncQueue(async pushAsyncCb => {
+    const sendSyncEvent = (data: T) => {
+      // Do not have race-condition over 1 persistent CRUD operation
+      pushAsyncCb(() => onReceiveNewEvent(data))
+    }
 
-  const sendSyncEvent = (data: T) => {
-    // Do not have race-condition over 1 persistent CRUD operation
-    syncQueue.pushAsyncCb(() => onReceiveNewEvent(data))
-  }
+    await Promise.all((transaction?.log ?? []).map(item => sendSyncEvent(item)))
 
-  await Promise.all((transaction?.log ?? []).map(item => sendSyncEvent(item)))
+    // ----------------------------------------------------------------
+    // -------- check if near future transaction will appear soon -----
+    if (!transaction) {
+      await with_TxEventSubscribe(
+        persistentTXStorage,
+        'unsubscribeAfterHandler',
+        async subscribe => {
+          const unsubscribe = await subscribe(event => sendSyncEvent(event))
 
-  // ----------------------------------------------------------------
-  // -------- check if near future transaction will appear soon -----
-  if (!transaction) {
-    await with_TxEventSubscribe(persistentTXStorage, 'unsubscribeAfterHandler', async subscribe => {
-      const unsubscribe = await subscribe(event => sendSyncEvent(event))
+          conf.registerOnDisconnect(() => unsubscribe())
 
-      conf.registerOnDisconnect(() => unsubscribe())
+          const MAX_DELAY_MS_FOR_NEAR_FUTURE_TRANSACTION = conf.waitTillTransactionWillBeOpened
+          await delay(MAX_DELAY_MS_FOR_NEAR_FUTURE_TRANSACTION)
+          transaction = await persistentTXStorage.getTransaction()
+        }
+      )
+    }
 
-      const MAX_DELAY_MS_FOR_NEAR_FUTURE_TRANSACTION = conf.waitTillTransactionWillBeOpened
-      await delay(MAX_DELAY_MS_FOR_NEAR_FUTURE_TRANSACTION)
-      transaction = await persistentTXStorage.getTransaction()
-    })
-  }
+    if (transaction) {
+      await with_TxEventSubscribe(
+        persistentTXStorage,
+        'unsubscribeAfterTransactionEnds',
+        async subscribe => {
+          // WARNING!!!
+          // there is race condition between executing subscription and start subscribing!!!
+          const unsubscribe = await subscribe(event => sendSyncEvent(event))
 
-  if (transaction) {
-    await with_TxEventSubscribe(
-      persistentTXStorage,
-      'unsubscribeAfterTransactionEnds',
-      async subscribe => {
-        // WARNING!!!
-        // there is race condition between executing subscription and start subscribing!!!
-        const unsubscribe = await subscribe(event => sendSyncEvent(event))
-
-        conf.registerOnDisconnect(() => unsubscribe())
-      }
-    )
-  }
+          conf.registerOnDisconnect(() => unsubscribe())
+        }
+      )
+    }
+  })
 }
 
 const executeNewTransactionJob = async <T>(
